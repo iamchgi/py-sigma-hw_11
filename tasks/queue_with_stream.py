@@ -1,5 +1,4 @@
-
-'''
+"""
 Завдання_2.
 З використанням технології черги – queue організувати модель обробки потоку звернень до сервера (back-end) від множини клієнтів (front-end).
 Тобто маємо ситуацію обробки декількох черг.
@@ -16,7 +15,7 @@ https://docs.python.org/3/library/queue.html
 
 ---------------------------------------------------------------------------------------------------------------------------------------------
 
-'''
+"""
 
 import threading    # паралельні процеси для потоків https://docs.python.org/3/library/threading.html
 import queue        # чергі для потоків https://docs.python.org/3/library/threading.html
@@ -30,13 +29,17 @@ def worker():                                          # функція орга
         print(f'Finished {item}')
         q.task_done()
 
-
-threading.Thread(target=worker, daemon=True).start()  # Увімкніть робочий потік
-
-
-for item in range(30):                                # Надішліть робочому потоку тридцять запитів на завдання
-    q.put(item)
+if __name__ == '__main__':
 
 
-q.join()                                             # блокувати, доки всі елементи в черзі не будуть отримані та оброблені.
-print('All work completed')
+    threading.Thread(target=worker, daemon=True).start()  # Увімкніть робочий потік
+
+
+    for item in range(30):                                # Надішліть робочому потоку тридцять запитів на завдання
+        q.put(item)
+
+
+    q.join()                                             # блокувати, доки всі елементи в черзі не будуть отримані та оброблені.
+    print('All work completed')
+
+

@@ -7,3 +7,59 @@ def clear_screen() -> None:
     else:
         os.system('clear')
     return None
+
+
+    import heapq
+
+
+def dijkstra(graph, start, end):
+    # Словарь для хранения минимальных расстояний до каждой вершины
+    distances = {vertex: float('inf') for vertex in graph}
+    distances[start] = 0
+
+    # Приоритетная очередь: (расстояние, вершина)
+    priority_queue = [(0, start)]
+
+    # Словарь для отслеживания пути
+    previous_vertices = {vertex: None for vertex in graph}
+
+    while priority_queue:
+        current_distance, current_vertex = heapq.heappop(priority_queue)
+
+        # Если вершина уже обработана, пропускаем
+        if current_distance > distances[current_vertex]:
+            continue
+
+        # Проверяем соседей
+        for neighbor, weight in graph[current_vertex].items():
+            distance = current_distance + weight
+
+            # Если найден более короткий путь
+            if distance < distances[neighbor]:
+                distances[neighbor] = distance
+                previous_vertices[neighbor] = current_vertex
+                heapq.heappush(priority_queue, (distance, neighbor))
+
+    # Восстанавливаем путь
+    path = []
+    current = end
+    while current is not None:
+        path.append(current)
+        current = previous_vertices[current]
+
+    path.reverse()
+    return distances[end], path
+
+
+# Пример графа: Словарь смежности
+graph = {
+    'A': {'B': 1, 'C': 4},
+    'B': {'A': 1, 'C': 2, 'D': 6},
+    'C': {'A': 4, 'B': 2, 'D': 3},
+    'D': {'B': 6, 'C': 3}
+}
+
+# Найти кратчайший путь из A в D
+shortest_distance, shortest_path = dijkstra(graph, 'A', 'D')
+print("Кратчайшее расстояние:", shortest_distance)
+print("Кратчайший путь:", shortest_path)
