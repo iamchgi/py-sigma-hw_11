@@ -13,33 +13,112 @@
 
 https://docs.python.org/3/library/queue.html
 
----------------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------------------
+Package Version
+------- -------
+pip 24.3.1
+
 
 """
 
-import threading    # паралельні процеси для потоків https://docs.python.org/3/library/threading.html
-import queue        # чергі для потоків https://docs.python.org/3/library/threading.html
+import threading  # паралельні процеси для потоків https://docs.python.org/3/library/threading.html
+import queue  # чергі для потоків https://docs.python.org/3/library/threading.html
+import time
 
-q = queue.Queue()
 
-def worker():                                          # функція організація робіт
-    while True:
-        item = q.get()
-        print(f'Working on {item}')
-        print(f'Finished {item}')
-        q.task_done()
+class QueueOfQueues:
+    def __init__(self):
+        self.main_queue = queue.Queue()  # Главная очередь
+
+    def enqueue(self, sub_queue):
+        """Додати вкладену чергу у головну."""
+        self.main_queue.put(sub_queue)
+
+    def dequeue(self):
+        """Видалити завдання з першої вкладеної черги."""
+        if self.main_queue.empty():
+            return None  # Якщо головна черга порожня, повертаємо None
+
+        # Беремо першу вкладену чергу
+        current_queue = self.main_queue.get()
+
+        try:
+            # Видаляємо завдання з вкладеної черги
+            item = current_queue.get_nowait()
+            # Якщо вкладена черга не порожня, повертаємо її назад в головну чергу
+            if not current_queue.empty():
+                self.main_queue.put(current_queue)
+            return item
+        except queue.Empty:
+            # Якщо вкладена черга порожня, просто пропускаємо
+            return None
+
+    def is_empty(self):
+        """Перевірити, чи порожня головна черга."""
+        return self.main_queue.empty()
+
+
+# Створюємо головну чергу черг
+queue_of_queues = QueueOfQueues()
+
+
+# Робочій метод для потоків
+def hard_worker(worker_id, queue_of_queues):
+    while not queue_of_queues.is_empty():
+        task = queue_of_queues.dequeue()
+        if task is not None:
+            print(f"Потік {worker_id} обробляє завдання: {task}")
+            time.sleep(0.5)  # Емулюємо роботу
+        else:
+            time.sleep(0.1)  # Якщо завдань нема, чекаємо
+
+
+def queues_demo() -> None:
+    # Створюємо декілько вкладених черг
+    for i in range(3):
+        sub_queue = queue.Queue()
+        for j in range(5):  # Кожна вкладена черга містить 5 завдань
+            sub_queue.put(f"Завдання {i}-{j}")
+        queue_of_queues.enqueue(sub_queue)
+
+    # Стартуємо потоки
+    threads = []
+    for i in range(4):  # 5 потоків
+        t = threading.Thread(target=hard_worker, args=(i, queue_of_queues))
+        t.start()
+        threads.append(t)
+
+    # Чекаємо завершення потоків
+    for t in threads:
+        t.join()
+
+    print("All done.")
+    return None
+
 
 if __name__ == '__main__':
+    queues_demo()
 
 
-    threading.Thread(target=worker, daemon=True).start()  # Увімкніть робочий потік
+''' 
+РЕЗУЛЬТАТ
+
+Потік 0 обробляє завдання: Завдання 0-0
+Потік 1 обробляє завдання: Завдання 1-0
+Потік 2 обробляє завдання: Завдання 2-0
+Потік 3 обробляє завдання: Завдання 0-1
+Потік 0 обробляє завдання: Завдання 1-1
+Потік 1 обробляє завдання: Завдання 2-1
+Потік 2 обробляє завдання: Завдання 0-2
+Потік 3 обробляє завдання: Завдання 1-2
+Потік 0 обробляє завдання: Завдання 2-2
+Потік 1 обробляє завдання: Завдання 0-3
+Потік 2 обробляє завдання: Завдання 1-3
+Потік 3 обробляє завдання: Завдання 2-3
+Потік 0 обробляє завдання: Завдання 0-4
+Потік 1 обробляє завдання: Завдання 1-4
+Потік 3 обробляє завдання: Завдання 2-4
+All done.
 
 
-    for item in range(30):                                # Надішліть робочому потоку тридцять запитів на завдання
-        q.put(item)
-
-
-    q.join()                                             # блокувати, доки всі елементи в черзі не будуть отримані та оброблені.
-    print('All work completed')
-
-
+'''

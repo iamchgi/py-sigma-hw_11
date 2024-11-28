@@ -18,7 +18,7 @@ https://www.geeksforgeeks.org/implementation-of-hash-table-in-python-using-separ
 --------------------------------------------------------------------------------------------------------------------
 
 """
-from tasks.Model import Book
+from tasks import Book
 
 
 # Клас Node - вузол у зв’язаному списку, який міститиме пару ключ-значення + покажчик на наступний вузол у списку
